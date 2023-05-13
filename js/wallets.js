@@ -1,6 +1,6 @@
 const chainId = "1064487b3cd1a897ce03ae5b6a865651747e2e152090f99c1d19d44e01aea5a4";
 const endpoint = "wax.greymass.com";
-const dapp = "ryucrypt.github.io";
+const dapp = "brixsociety.io";
 
 const wax = new waxjs.WaxJS({rpcEndpoint: "https://" + endpoint, tryAutoLogin: false});
 
