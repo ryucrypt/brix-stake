@@ -206,13 +206,23 @@ String.prototype.format = function () {
 };
 
 const formatToken = (precision, amount) => {
-    return (+(Math.round(+(amount + 'e' + precision)) + 'e' + -precision)).toFixed(precision);
+    return (+(Math.round(+(amount + 'e' + precision)) + 'e' + -precision)).toLocaleString(
+        undefined, {
+            minimumFractionDigits: precision,
+            maximumFractionDigits: precision
+        }
+    );
 }
 
 const fetchBalance = () => {
     wax.rpc.get_currency_balance("brixbrixtoke", wallet, "BRIX")
         .then(data => {
-            $("#balance").text(data[0]);
+            try {
+                let token = data[0].split(" ");
+                $("#balance").text(formatToken(token[0].split(".")[1].length, token[0]) + ` ${token[1]}`);
+            } catch(e) {
+                $("#balance").text(data[0]);
+            }
         });
 }
 
@@ -322,10 +332,12 @@ const refresh = (mode) => {
             let rendered = $(Mustache.render(template, i));
             rendered.appendTo("#staked");
         }
+        $("#staked-tab").text(`Staked (${staked.length})`);
         for (const i of unstaked) {
             let rendered = $(Mustache.render(template, i));
             rendered.appendTo("#unstaked");
         }
+        $("#unstaked-tab").text(`Unstaked (${unstaked.length})`);
 
         $("#stake_all").prop("disabled", unstaked.length < 1);
         $("#unstake_all").prop("disabled", staked.length < 1);
