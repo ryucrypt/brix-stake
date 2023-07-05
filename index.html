@@ -157,8 +157,10 @@
 <script src="https://unpkg.com/anchor-link-browser-transport@3"></script>
 <script src="js/waxjs.js"></script>
 <script src="js/scatterjs-core-min.js"></script>
-<script src="js/scatterjs-plugin-eosjs.min.js"></script>
-<script src="js/eos-min.js"></script>
+<script src="js/scatterjs-plugin-eosjs2.min.js"></script>
+<script src="js/externals.min.js"></script>
+<script src="js/eosjs-api.min.js"></script>
+<script src="js/eosjs-jsonrpc.min.js"></script>
 <script src="js/wallets.js"></script>
 <script>
 const EXPLORER = "https://waxblock.io/transaction/";
@@ -491,19 +493,17 @@ const claim = async() => {
 }
 
 $(document).ready(async function() {
-    wax.rpc.get_table_rows(RATES)
-        .then(data => {
-            for (let i = 0; i < data.rows.length; i++) {
-                var row = data.rows[i];
-                if (row.values.length < 1) {
-                    rates[row.template_id.toString()] = row.boost_rate;
-                } else {
-                    for (let j = 0; j < row.values.length; j++) {
-                        rates[row.template_id.toString() + row.values[j].key] = row.values[j].value;
-                    }
-                }
+    data = await wax.rpc.get_table_rows(RATES);
+    for (let i = 0; i < data.rows.length; i++) {
+        var row = data.rows[i];
+        if (row.values.length < 1) {
+            rates[row.template_id.toString()] = row.boost_rate;
+        } else {
+            for (let j = 0; j < row.values.length; j++) {
+                rates[row.template_id.toString() + row.values[j].key] = row.values[j].value;
             }
-        });
+        }
+    }
 
     if (await wallet_isAutoLoginAvailable()) {
         await login();
