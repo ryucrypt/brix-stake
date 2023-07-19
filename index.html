@@ -493,10 +493,6 @@ const claim = async() => {
 }
 
 $(document).ready(async function() {
-    if (await wallet_isAutoLoginAvailable()) {
-        await login();
-    }
-
     data = await wax.rpc.get_table_rows(RATES);
     for (let i = 0; i < data.rows.length; i++) {
         var row = data.rows[i];
@@ -507,6 +503,10 @@ $(document).ready(async function() {
                 rates[row.template_id.toString() + row.values[j].key] = row.values[j].value;
             }
         }
+    }
+
+    if (await wallet_isAutoLoginAvailable()) {
+        await login();
     }
 });
 </script>
