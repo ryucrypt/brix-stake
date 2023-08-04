@@ -256,7 +256,8 @@ const fetchAssets = async() => {
                     "url": function() {
                         return function() {
                             if (this.img.startsWith("http")) {
-                                return this.img;
+                                let img = /ipfs\/(.*)/.exec(this.img);
+                                return IPFS + img[1];
                             } else {
                                 return IPFS + this.img;
                             }
