@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" sizes="96x96" href="res/favi.png">
+    <title>$BLOX Airdrop</title>
+    <meta property="og:title" content="$BLOX Airdrop">
+    <meta property="og:image" content="https://staking2.brixsociety.io/res/favi.png">
+    <meta property="og:description" content="Info on $BLOX airdrops.">
+    <meta property="og:type" content="website">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.21.4/dist/bootstrap-table.min.css">
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-TKRGTCTL23"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-TKRGTCTL23');
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
+            <a href="./index.html" class="align-items-center me-auto text-dark text-decoration-none">
+                <h2 style="font-family:'Press Start 2P'">$BLOX AIRDROP</h2>
+                <p>Info on $BLOX airdrops.</p>
+            </a>
+            <ul class="nav nav-pills">
+                <li class="nav-item"><a href="./" class="nav-link" aria-current="page">Overview</a></li>
+                <li class="nav-item"><a href="./assets.html" class="nav-link active" aria-current="page">Assets</a></li>
+                <li class="nav-item"><a href="./logs.html" class="nav-link" aria-current="page">Logs</a></li>
+                <li class="nav-item"><a href="/" class="nav-link" aria-current="page">BRIX Staking</a></li>
+                <li class="nav-item"><a href="https://cpurent.brixsociety.io" class="nav-link" aria-current="page">CPU Rental</a></li>
+            </ul>
+        </header>
+        <main>
+            <div class="row mb-3">
+                <div class="col-md-auto">
+                    <label for="address" class="form-label">WAX Address</label>
+                    <input type="text" class="form-control" id="address">
+                </div>
+                <div class="col-auto d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary" onclick="run()">Submit</button>
+                </div>
+                <div class="col-auto d-flex align-items-end">
+                    <button id="csv" type="submit" class="btn btn-primary disabled" onclick="downloadCSV()">Download CSV</button>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div id="loading" class="d-flex justify-content-center visually-hidden">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="err_msg" class="alert alert-danger visually-hidden" role="alert"></div>
+                <div id="result" class="visually-hidden">
+                    <p>Last updated on: <b id="last_updated"></b></p>
+                    <p>Estimated overall QDOS Score: <b id="overall_qdos"></b></p>
+                    <p>Estimated daily BLOX: <b id="dist"></b></p>
+                    <div class="table-responsive">
+                        <table
+                            id="table"
+                            class="table table-sm table-bordered"
+                            data-toggle="table"
+                            data-show-footer="true"
+                            data-filter-control="true">
+                            <thead>
+                                <tr class="table-dark">
+                                    <th scope="col" data-field="asset_id" data-formatter="assetFormatter" data-align="center">Asset</th>
+                                    <th scope="col" data-field="collection" data-formatter="collectionFormatter" data-filter-control="select" data-align="center">Collection</th>
+                                    <th scope="col" data-field="template_id" data-formatter="templateFormatter" data-filter-control="select" data-align="center">Template</th>
+                                    <th scope="col" data-field="mint_number" data-align="center">Mint #</th>
+                                    <th scope="col" data-field="name" data-align="center">Name</th>
+                                    <th scope="col" data-field="qdos" data-footer-formatter="totalFormatter" data-align="center" data-sortable="true">QDOS</th>
+                                    <th scope="col" data-field="updated_at" data-align="center">Updated</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <footer>
+            <div class="row justify-content-center border-top">
+                <p class="text-center text-muted my-3">Made by ryucrypt: wwiem.wam</p>
+            </div>
+        </footer>
+    </div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/bootstrap-table@1.21.4/dist/bootstrap-table.min.js"></script>
+<script src="https://unpkg.com/bootstrap-table@1.21.4/dist/extensions/filter-control/bootstrap-table-filter-control.min.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>
+const COL = "https://wax.atomichub.io/explorer/collection/wax-mainnet/{0}";
+const TEMPLATE = "https://wax.atomichub.io/explorer/template/wax-mainnet/{0}/{1}";
+const ASSET = "https://wax.atomichub.io/explorer/asset/wax-mainnet/{0}";
+
+const formatToken = (precision, amount) => {
+    return (+(Math.round(+(amount/10 ** precision + 'e' + precision)) + 'e' + -precision)).toFixed(precision);
+}
+
+const formatNum = (precision, amount) => {
+    return (+(Math.round(+(amount + 'e' + precision)) + 'e' + -precision)).toFixed(precision);
+}
+
+function totalFormatter(data) {
+    return formatNum(1,
+        data.map(function (row) {
+            return row.qdos;
+        }).reduce(function (sum, i) {
+            return sum + i
+        }, 0)
+    );
+}
+
+function assetFormatter(value, row, index, field) {
+    return `<a href="${ASSET.format(value)}" target="_blank">${value}</a>`;
+}
+
+function collectionFormatter(value, row, index, field) {
+    return `<a href="${COL.format(value)}" target="_blank">${value}</a>`;
+}
+
+function templateFormatter(value, row, index, field) {
+    return `<a href="${TEMPLATE.format(row.collection, value)}" target="_blank">${value}</a>`;
+}
+
+String.prototype.format = function () {
+    var args = arguments;
+    return this.replace(/{([0-9]+)}/g, function (match, index) {
+        return typeof args[index] == 'undefined' ? match : args[index];
+    });
+};
+
+const fetchData = async(address) => {
+    var output = [];
+    var start = 0;
+    var end = 999;
+    while (true) {
+        const { data, error } = await client
+            .from("drip_asset_data")
+            .select()
+            .eq("owner", address)
+            .order("updated_at", { ascending: false })
+            .range(start, end);
+
+        if (error != undefined) {
+            throw new Error(error.message);
+        }
+
+        if (data.length < 1) {
+            break;
+        } else {
+            output = output.concat(data);
+            start += 1000;
+            end += 1000;
+        }
+    }
+
+    return output;
+}
+
+var $table = $("#table");
+var global_output = [];
+var global_csv = "";
+var header = "asset_id,collection,template_id,mint_number,name,qdos,updated\r\n";
+var client;
+var last_updated;
+var total_dist = 0;
+var overall_qdos = 0;
+var qdos = 0;
+
+const setErr = (msg) => {
+    $("#loading").addClass("visually-hidden");
+    $("#err_msg").text(msg);
+    $("#err_msg").removeClass("visually-hidden");
+}
+
+const run = async() => {
+    $("#result").addClass("visually-hidden");
+    $("#err_msg").addClass("visually-hidden");
+    $("#csv").addClass("disabled");
+    $("#loading").removeClass("visually-hidden");
+
+    var address = $("#address").val().trim().toLowerCase();
+    if (address == "") {
+        setErr("Address cannot be empty");
+        return;
+    }
+    localStorage.setItem("inputAddress", address);
+
+    try {
+        var data = await fetchData(address);
+    } catch(err) {
+        setErr(`Failed to fetch data: ${err.message}`);
+        return;
+    }
+
+    global_output = [];
+    global_csv = header;
+    qdos = 0;
+    for (var i = 0; i < data.length; i++) {
+        qdos += data[i].qdos;
+        var obj = {
+            asset_id: data[i].asset_id,
+            collection: data[i].collection,
+            template_id: data[i].template_id,
+            mint_number: data[i].mint_number,
+            name: data[i].name,
+            qdos: data[i].qdos,
+            updated_at: (new Date(data[i].updated_at)).toLocaleString()
+        };
+        global_output.push(obj);
+        var values = Object.values(obj).map((value)=>{
+            if (typeof value === "string" && value.includes(" ")) {
+                return '"' + value + '"';
+            }
+            return value;
+        });
+        global_csv += values.join(",") + "\r\n";
+    }
+    $table.bootstrapTable("load", global_output);
+
+    $("#last_updated").text(last_updated);
+    $("#overall_qdos").text(`${formatNum(1, overall_qdos)}`);
+    var dist = formatToken(8, qdos / overall_qdos * total_dist);
+    $("#dist").text(`${dist} BLOX`);
+
+    $("#result").removeClass("visually-hidden");
+    $("#csv").removeClass("disabled");
+    $("#loading").addClass("visually-hidden");
+}
+
+const downloadCSV = () => {
+    var csvFile = new Blob([global_csv], {type: "text/csv"});
+    var downloadLink = document.createElement("a");
+    downloadLink.download = "export.csv";
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+}
+
+$(document).ready(async function() {
+    if (localStorage.getItem("inputAddress")) {
+        $("#address").val(localStorage.getItem("inputAddress"));
+    }
+    client = supabase.createClient(
+        "https://vqfufqxyzupjsmcdmarf.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxZnVmcXh5enVwanNtY2RtYXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODUzNzUyNTksImV4cCI6MjAwMDk1MTI1OX0.jn81C9YruDL6QgGmPASqLxQ5XiurE4eTjSmMTXTkNGo"
+    );
+
+    var { data, error } = await client.rpc("get_total_qdos");
+    if (error != undefined) {
+        throw new Error(error.message);
+    }
+    overall_qdos = data;
+
+    var { data, error } = await client
+        .from("config")
+        .select();
+    if (error != undefined) {
+        throw new Error(error.message);
+    }
+    total_dist = parseInt(data.filter(x => x.key == "blox_daily_dist")[0].value);
+    last_updated = new Date(parseInt(data.filter(x => x.key == "blox_updated")[0].value));
+});
+</script>
+</body>
+</html>
