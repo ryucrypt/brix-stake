@@ -114,7 +114,7 @@ function totalFormatter(data) {
 }
 
 function txnFormatter(value, row, index, field) {
-    return `<a href="${EXPLORER.format(value)}" target="_blank">${value}</a>`;
+    return `<a href="${EXPLORER.format(value)}" target="_blank"><i class="bi bi-link-45deg"></i></a>`;
 }
 
 function accFormatter(value, row, index, field) {
