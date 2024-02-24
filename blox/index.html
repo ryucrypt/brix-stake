@@ -55,7 +55,7 @@
                             data-filter-control="true">
                             <thead>
                                 <tr>
-                                    <th scope="col" data-field="wallet" data-formatter="accFormatter" data-filter-control="select" data-align="center">Wallet</th>
+                                    <th scope="col" data-field="wallet" data-formatter="accFormatter" data-filter-control="input" data-align="center">Wallet</th>
                                     <th scope="col" data-field="qdos" data-footer-formatter="totalFormatter" data-align="center" data-sortable="true">QDOS</th>
                                     <th scope="col" data-field="blox" data-formatter="bloxFormatter" data-footer-formatter="totalBloxFormatter" data-align="center" data-sortable="true">Estimated Daily $BLOX</th>
                                 </tr>
@@ -79,8 +79,6 @@
 <script src="https://unpkg.com/bootstrap-table@1.21.4/dist/extensions/filter-control/bootstrap-table-filter-control.min.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
-const ACC = "https://waxblock.io/account/{0}";
-
 const formatToken = (precision, amount) => {
     return (+(Math.round(+(amount/10 ** precision + 'e' + precision)) + 'e' + -precision)).toFixed(precision);
 }
@@ -90,7 +88,7 @@ const formatNum = (precision, amount) => {
 }
 
 function accFormatter(value, row, index, field) {
-    return `<a href="${ACC.format(value)}" target="_blank">${value}</a>`;
+    return `<a href="./assets.html?wallet=${value}">${value}</a>`;
 }
 
 function bloxFormatter(value, row, index, field) {

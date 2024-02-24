@@ -249,9 +249,6 @@ const downloadCSV = () => {
 }
 
 $(document).ready(async function() {
-    if (localStorage.getItem("inputAddress")) {
-        $("#address").val(localStorage.getItem("inputAddress"));
-    }
     client = supabase.createClient(
         "https://vqfufqxyzupjsmcdmarf.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxZnVmcXh5enVwanNtY2RtYXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODUzNzUyNTksImV4cCI6MjAwMDk1MTI1OX0.jn81C9YruDL6QgGmPASqLxQ5XiurE4eTjSmMTXTkNGo"
@@ -271,6 +268,17 @@ $(document).ready(async function() {
     }
     total_dist = parseInt(data.filter(x => x.key == "blox_daily_dist")[0].value);
     last_updated = new Date(parseInt(data.filter(x => x.key == "blox_updated")[0].value));
+
+    var url = new URL(window.location.href);
+    var address = url.searchParams.get("wallet");
+    if (address != undefined) {
+        $("#address").val(address);
+        await run();
+    } else {
+        if (localStorage.getItem("inputAddress")) {
+            $("#address").val(localStorage.getItem("inputAddress"));
+        }
+    }
 });
 </script>
 </body>
