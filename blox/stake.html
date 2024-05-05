@@ -76,7 +76,7 @@
                                         <div class="input-group">
                                             <input id="stake-amnt" type="number" class="form-control"></input>
                                         </div>
-                                        <label for="stake-amnt" class="form-label"><i class="bi bi-wallet2"></i> <span id="balance"></span></label>
+                                        <label for="stake-amnt" class="form-label"><i class="bi bi-wallet2"></i> <a href="#" id="balance" class="text-decoration-none text-body-secondary" onclick="event.preventDefault();fill_max('balance')"></a></label>
                                     </div>
                                 </div>
                                 <div class="row mb-3">
@@ -109,7 +109,7 @@
                                         <div class="input-group">
                                             <input type="number" id="unstake-amnt" class="form-control"></input>
                                         </div>
-                                        <label for="unstake-amnt" class="form-label"><i class="bi bi-wallet2"></i> <span id="staked"></span></label>
+                                        <label for="unstake-amnt" class="form-label"><i class="bi bi-wallet2"></i> <a href="#" id="staked" class="text-decoration-none text-body-secondary" onclick="event.preventDefault();fill_max('staked')"></a></label>
                                     </div>
                                 </div>
                                 <div class="row mb-3">
@@ -179,28 +179,29 @@
                     <h4 class="text-light">{{stakedpct}}%</h4>
                 </div>
                 <div class="col-6 col-lg-2 align-self-center text-start text-lg-end ">
+                    {{#toclaim}}{{/toclaim}}
                     <button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#pool-{{pool}}">Details</button>
                 </div>
             </div>
         </div>
         <div class="card-body accordion-collapse collapse" id="pool-{{pool}}">
             <div class="row">
-                <div class="col text-light">
+                <div class="col-12 col-lg-4 text-light">
                     <h6>Unstaking: <span id="unstaked-{{pool}}">{{unstaked}}</span></h6>
                     <h6>Claimable: <span id="claim-{{pool}}">{{claim}}</span></h6>
                     <h6>Wait time: <span id="wait-{{pool}}">N/A</span></h6>
                     {{#reduced}}{{/reduced}}
                 </div>
-                <div class="col align-self-center text-end">
+                <div class="col-12 col-lg-8 align-self-center text-end">
                     <div class="row">
-                        <div class="col-lg-6 mb-2 mb-lg-0">
-                            <button type="button" id="btn-open-{{pool}}" class="btn btn-primary" title="Open balance" onclick="open_bal({{pool}})"><i class="bi bi-door-open-fill"></i></button>
-                            <button type="button" id="btn-close-{{pool}}" class="btn btn-primary" title="Close balance" onclick="close_bal({{pool}})"><i class="bi bi-door-closed"></i></button>
+                        <div class="col-12 col-md-6 mb-2 mb-lg-0">
+                            <button type="button" id="btn-open-{{pool}}" class="btn btn-primary" title="Open balance" onclick="open_bal({{pool}})">Open</i></button>
+                            <button type="button" id="btn-close-{{pool}}" class="btn btn-primary" title="Close balance" onclick="close_bal({{pool}})">Close</i></button>
                         </div>
-                        <div class="col-lg-6">
-                            <button type="button" id="btn-stake-{{pool}}" class="btn btn-success" title="Add stake" data-bs-toggle="modal" data-bs-target="#stake" onclick="load_stake({{pool}})">+</button>
-                            <button type="button" id="btn-unstake-{{pool}}" class="btn btn-danger" title="Remove stake" data-bs-toggle="modal" data-bs-target="#unstake" onclick="load_unstake({{pool}})">-</button>
-                            <button type="button" id="btn-claim-{{pool}}" class="btn btn-warning" title="Claim stake" onclick="claim({{pool}})"><i class="bi bi-cash-coin"></i></button>
+                        <div class="col-12 col-md-6">
+                            <button type="button" id="btn-stake-{{pool}}" class="btn btn-success" title="Add stake" data-bs-toggle="modal" data-bs-target="#stake" onclick="load_stake({{pool}})">Stake</button>
+                            <button type="button" id="btn-unstake-{{pool}}" class="btn btn-danger" title="Remove stake" data-bs-toggle="modal" data-bs-target="#unstake" onclick="load_unstake({{pool}})">Unstake</button>
+                            <button type="button" id="btn-claim-{{pool}}" class="btn btn-warning" title="Claim stake" onclick="claim({{pool}})">Claim</i></button>
                         </div>
                     </div>
                 </div>
@@ -358,6 +359,15 @@ const fetchConfig = async() => {
                         return "";
                     }
                 }
+            },
+            "toclaim": function() {
+                return function() {
+                    if (this.claim != `0 ${this.symbol}`) {
+                        return `<i class="bi bi-exclamation-circle text-warning me-1 align-middle"></i>`;
+                    } else {
+                        return "";
+                    }
+                }
             }
         })
     }
@@ -490,14 +500,24 @@ const load_stake = async(pool) => {
     target_pool = pools.filter(obj => obj.pool == pool);
     let bal = await fetchBalance(target_pool[0].contract, target_pool[0].symbol);
     $("#balance").text(bal);
+    $("#stake-amnt").val("");
     setModalLoad(false);
 }
 
 const load_unstake = async(pool) => {
     setModalLoad(true);
     target_pool = pools.filter(obj => obj.pool == pool);
-    $("#staked").html(target_pool[0].staked);
+    $("#staked").text(target_pool[0].staked);
+    $("#unstake-amnt").val("");
     setModalLoad(false);
+}
+
+const fill_max = (target) => {
+    if (target == "balance") {
+        $("#stake-amnt").val($("#balance").text().split(" ")[0]);
+    } else {
+        $("#unstake-amnt").val($("#staked").text().split(" ")[0]);
+    }
 }
 
 const open_bal = async(pool) => {
@@ -620,13 +640,14 @@ const stake = async() => {
                 memo: `stake;${target_pool[0].pool}`
             }
         }];
-        bootstrap.Modal.getOrCreateInstance("#stake").hide();
         var txn = await wallet_transact(actions);
+        bootstrap.Modal.getOrCreateInstance("#stake").hide();
         setPass("Success! <a href='{0}{1}' target='_blank'>View Transaction</a>".format(EXPLORER, txn.transaction_id));
         setTimeout(async() => {
             await refresh();
         }, 1500);
     } catch(e) {
+        bootstrap.Modal.getOrCreateInstance("#stake").hide();
         setErr(e.message);
     }
 }
@@ -654,13 +675,14 @@ const unstake = async() => {
                 amnt: `${formatToken(target_pool[0].precision, ($("#unstake-amnt").val()))} ${target_pool[0].symbol}`,
             }
         }];
-        bootstrap.Modal.getOrCreateInstance("#unstake").hide();
         var txn = await wallet_transact(actions);
+        bootstrap.Modal.getOrCreateInstance("#unstake").hide();
         setPass("Success! <a href='{0}{1}' target='_blank'>View Transaction</a>".format(EXPLORER, txn.transaction_id));
         setTimeout(async() => {
             await refresh();
         }, 1500);
     } catch(e) {
+        bootstrap.Modal.getOrCreateInstance("#unstake").hide();
         setErr(e.message);
     }
 }
