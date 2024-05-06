@@ -58,8 +58,6 @@
                 <div id="err_msg" class="alert alert-danger visually-hidden" role="alert"></div>
                 <div id="result" class="visually-hidden">
                     <p>Last updated on: <b id="last_updated"></b></p>
-                    <p>Estimated overall QDOS Score: <b id="overall_qdos"></b></p>
-                    <p>Estimated daily BLOX: <b id="dist"></b></p>
                     <div class="table-responsive">
                         <table
                             id="table"
@@ -172,9 +170,6 @@ var global_csv = "";
 var header = "asset_id,collection,template_id,mint_number,name,qdos,updated\r\n";
 var client;
 var last_updated;
-var total_dist = 0;
-var overall_qdos = 0;
-var qdos = 0;
 
 const setErr = (msg) => {
     $("#loading").addClass("visually-hidden");
@@ -206,7 +201,6 @@ const run = async() => {
     global_csv = header;
     qdos = 0;
     for (var i = 0; i < data.length; i++) {
-        qdos += data[i].qdos;
         var obj = {
             asset_id: data[i].asset_id,
             collection: data[i].collection,
@@ -228,9 +222,6 @@ const run = async() => {
     $table.bootstrapTable("load", global_output);
 
     $("#last_updated").text(last_updated);
-    $("#overall_qdos").text(`${formatNum(1, overall_qdos)}`);
-    var dist = formatToken(8, qdos / overall_qdos * total_dist);
-    $("#dist").text(`${dist} BLOX`);
 
     $("#result").removeClass("visually-hidden");
     $("#csv").removeClass("disabled");
@@ -253,19 +244,12 @@ $(document).ready(async function() {
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxZnVmcXh5enVwanNtY2RtYXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODUzNzUyNTksImV4cCI6MjAwMDk1MTI1OX0.jn81C9YruDL6QgGmPASqLxQ5XiurE4eTjSmMTXTkNGo"
     );
 
-    var { data, error } = await client.rpc("get_total_qdos");
-    if (error != undefined) {
-        throw new Error(error.message);
-    }
-    overall_qdos = data;
-
     var { data, error } = await client
         .from("config")
         .select();
     if (error != undefined) {
         throw new Error(error.message);
     }
-    total_dist = parseInt(data.filter(x => x.key == "blox_daily_dist")[0].value);
     last_updated = new Date(parseInt(data.filter(x => x.key == "blox_updated")[0].value));
 
     var url = new URL(window.location.href);

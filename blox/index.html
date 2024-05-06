@@ -55,7 +55,9 @@
                             <thead>
                                 <tr>
                                     <th scope="col" data-field="wallet" data-formatter="accFormatter" data-filter-control="input" data-align="center">Wallet</th>
-                                    <th scope="col" data-field="qdos" data-footer-formatter="totalFormatter" data-align="center" data-sortable="true">QDOS</th>
+                                    <th scope="col" data-field="base" data-formatter="qdosFormatter" data-align="center" data-sortable="true">Base</th>
+                                    <th scope="col" data-field="multiplier" data-formatter="qdosFormatter" data-align="center" data-sortable="true">Multiplier</th>
+                                    <th scope="col" data-field="qdos" data-formatter="qdosFormatter" data-footer-formatter="totalFormatter" data-align="center" data-sortable="true">QDOS</th>
                                     <th scope="col" data-field="blox" data-formatter="bloxFormatter" data-footer-formatter="totalBloxFormatter" data-align="center" data-sortable="true">Estimated Daily $BLOX</th>
                                 </tr>
                             </thead>
@@ -94,8 +96,12 @@ function bloxFormatter(value, row, index, field) {
     return formatToken(8, value);
 }
 
+function qdosFormatter(value, row, index, field) {
+    return formatNum(4, value);
+}
+
 function totalFormatter(data) {
-    return formatNum(1,
+    return formatNum(4,
         data.map(function (row) {
             return row.qdos;
         }).reduce(function (sum, i) {
@@ -121,12 +127,16 @@ String.prototype.format = function () {
     });
 };
 
-const fetchData = async(address) => {
+const fetchData = async() => {
     var output = [];
-    var offset = 0;
+    var start = 0;
+    var end = 999;
     while (true) {
         const { data, error } = await client
-            .rpc("get_all_qdos", {lim: 1000, off: offset});
+            .from("qdos_data")
+            .select()
+            .order("qdos", { ascending: false })
+            .range(start, end);
 
         if (error != undefined) {
             throw new Error(error.message);
@@ -136,7 +146,8 @@ const fetchData = async(address) => {
             break;
         } else {
             output = output.concat(data);
-            offset += 1000;
+            start += 1000;
+            end += 1000;
         }
     }
 
