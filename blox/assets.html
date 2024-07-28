@@ -30,7 +30,8 @@
                 <p>Info on $BLOX airdrops.</p>
             </a>
             <ul class="nav nav-pills">
-                <li class="nav-item"><a href="./" class="nav-link" aria-current="page">Overview</a></li>
+                <li class="nav-item"><a href="./" class="nav-link" aria-current="page">QDOS</a></li>
+                <li class="nav-item"><a href="./hotspot.html" class="nav-link" aria-current="page">HOTSPOT</a></li>
                 <li class="nav-item"><a href="./assets.html" class="nav-link active" aria-current="page">Assets</a></li>
                 <li class="nav-item"><a href="./pools.html" class="nav-link" aria-current="page">Pools</a></li>
                 <li class="nav-item"><a href="./logs.html" class="nav-link" aria-current="page">Logs</a></li>
@@ -73,7 +74,8 @@
                                     <th scope="col" data-field="template_id" data-formatter="templateFormatter" data-filter-control="select" data-align="center">Template</th>
                                     <th scope="col" data-field="mint_number" data-align="center">Mint #</th>
                                     <th scope="col" data-field="name" data-align="center">Name</th>
-                                    <th scope="col" data-field="qdos" data-footer-formatter="totalFormatter" data-align="center" data-sortable="true">Base</th>
+                                    <th scope="col" data-field="qdos" data-footer-formatter="totalFormatter" data-align="center" data-sortable="true">Base QDOS</th>
+                                    <th scope="col" data-field="hotspot" data-footer-formatter="total2Formatter" data-align="center" data-sortable="true">Base HOTSPOT</th>
                                     <th scope="col" data-field="updated_at" data-align="center">Updated</th>
                                 </tr>
                             </thead>
@@ -118,6 +120,16 @@ function totalFormatter(data) {
     );
 }
 
+function total2Formatter(data) {
+    return formatNum(1,
+        data.map(function (row) {
+            return row.hotspot;
+        }).reduce(function (sum, i) {
+            return sum + i
+        }, 0)
+    );
+}
+
 function assetFormatter(value, row, index, field) {
     return `<a href="${ASSET.format(value)}" target="_blank">${value}</a>`;
 }
@@ -139,11 +151,35 @@ String.prototype.format = function () {
 
 const fetchData = async(address) => {
     var output = [];
+
     var start = 0;
     var end = 999;
     while (true) {
         const { data, error } = await client
             .from("drip_asset_data")
+            .select()
+            .eq("owner", address)
+            .order("updated_at", { ascending: false })
+            .range(start, end);
+
+        if (error != undefined) {
+            throw new Error(error.message);
+        }
+
+        if (data.length < 1) {
+            break;
+        } else {
+            output = output.concat(data);
+            start += 1000;
+            end += 1000;
+        }
+    }
+
+    var start = 0;
+    var end = 999;
+    while (true) {
+        const { data, error } = await client
+            .from("hotspot_asset_data")
             .select()
             .eq("owner", address)
             .order("updated_at", { ascending: false })
@@ -168,7 +204,7 @@ const fetchData = async(address) => {
 var $table = $("#table");
 var global_output = [];
 var global_csv = "";
-var header = "asset_id,collection,template_id,mint_number,name,qdos,updated\r\n";
+var header = "asset_id,collection,template_id,mint_number,name,qdos,hotspot,updated\r\n";
 var client;
 var last_updated;
 
@@ -208,7 +244,8 @@ const run = async() => {
             template_id: data[i].template_id,
             mint_number: data[i].mint_number,
             name: data[i].name,
-            qdos: data[i].qdos,
+            qdos: data[i].qdos == undefined ? 0 : data[i].qdos,
+            hotspot: data[i].hotspot == undefined ? 0 : data[i].hotspot,
             updated_at: (new Date(data[i].updated_at)).toLocaleString()
         };
         global_output.push(obj);

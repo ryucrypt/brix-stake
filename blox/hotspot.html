@@ -31,24 +31,16 @@
             </a>
             <ul class="nav nav-pills">
                 <li class="nav-item"><a href="./" class="nav-link" aria-current="page">QDOS</a></li>
-                <li class="nav-item"><a href="./hotspot.html" class="nav-link" aria-current="page">HOTSPOT</a></li>
+                <li class="nav-item"><a href="./hotspot.html" class="nav-link active" aria-current="page">HOTSPOT</a></li>
                 <li class="nav-item"><a href="./assets.html" class="nav-link" aria-current="page">Assets</a></li>
-                <li class="nav-item"><a href="./pools.html" class="nav-link active" aria-current="page">Pools</a></li>
+                <li class="nav-item"><a href="./pools.html" class="nav-link" aria-current="page">Pools</a></li>
                 <li class="nav-item"><a href="./logs.html" class="nav-link" aria-current="page">Logs</a></li>
                 <li class="nav-item"><a href="./stake.html" class="nav-link" aria-current="page">Staking</a></li>
             </ul>
         </header>
         <main>
             <div class="row mb-3">
-                <p>Pool</p>
-                <div class="dropdown">
-                    <button class="btn btn-secondary dropdown-toggle" type="button" id="pool_lbl" data-bs-toggle="dropdown" aria-expanded="false">Please select a pool</button>
-                    <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="pool_lbl" id="pools">
-                    </ul>
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div id="loading" class="d-flex justify-content-center visually-hidden">
+                <div id="loading" class="d-flex justify-content-center">
                     <div class="spinner-border" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
@@ -65,10 +57,10 @@
                             <thead>
                                 <tr>
                                     <th scope="col" data-field="wallet" data-formatter="accFormatter" data-filter-control="input" data-align="center">Wallet</th>
-                                    <th scope="col" data-field="amount" data-align="center" data-footer-formatter="totalFormatter" data-sortable="true">Amount</th>
-                                    <th scope="col" data-field="symbol" data-align="center" data-sortable="true">Token</th>
-                                    <th scope="col" data-field="multiplier" data-formatter="qdosFormatter" data-align="center" data-sortable="true">Multiplier</th>
-                                    <th scope="col" data-field="target" data-formatter="targetFormatter" data-filter-control="select" data-align="center" data-sortable="true">Boosting</th>
+                                    <th scope="col" data-field="base" data-formatter="hotspotFormatter" data-align="center" data-sortable="true">Base</th>
+                                    <th scope="col" data-field="multiplier" data-formatter="hotspotFormatter" data-align="center" data-sortable="true">Multiplier</th>
+                                    <th scope="col" data-field="hotspot" data-formatter="hotspotFormatter" data-footer-formatter="totalFormatter" data-align="center" data-sortable="true">HOTSPOT</th>
+                                    <th scope="col" data-field="blox" data-formatter="bloxFormatter" data-footer-formatter="totalBloxFormatter" data-align="center" data-sortable="true">Estimated Daily $BLOX</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -90,40 +82,40 @@
 <script src="https://unpkg.com/bootstrap-table@1.21.4/dist/extensions/filter-control/bootstrap-table-filter-control.min.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
-EXPLORER = "https://waxblock.io/account/";
-POOLS = [
-    {id: 0, name: "BRIX-brixbrixtoke", multiplier: 1},
-    {id: 1, name: "BLOX-brixbrixtoke", multiplier: 1},
-    {id: 2, name: "BRIWAX-swap.taco", multiplier: 2},
-    {id: 3, name: "BLOBRI-swap.taco", multiplier: 2},
-];
+const formatToken = (precision, amount) => {
+    return (+(Math.round(+(amount/10 ** precision + 'e' + precision)) + 'e' + -precision)).toFixed(precision);
+}
 
 const formatNum = (precision, amount) => {
     return (+(Math.round(+(amount + 'e' + precision)) + 'e' + -precision)).toFixed(precision);
 }
 
 function accFormatter(value, row, index, field) {
-    return `<a href="${EXPLORER + value}" target="_blank">${value}</a>`;
+    return `<a href="./assets.html?wallet=${value}">${value}</a>`;
 }
 
-function qdosFormatter(value, row, index, field) {
+function bloxFormatter(value, row, index, field) {
+    return formatToken(8, value);
+}
+
+function hotspotFormatter(value, row, index, field) {
     return formatNum(4, value);
-}
-
-function targetFormatter(value, row, index, field) {
-    if (value == undefined) {
-        return "QDOS";
-    } else if (value > 0) {
-        return "HOTSPOT";
-    } else {
-        return "QDOS";
-    }
 }
 
 function totalFormatter(data) {
     return formatNum(4,
         data.map(function (row) {
-            return row.amount;
+            return row.hotspot;
+        }).reduce(function (sum, i) {
+            return sum + i
+        }, 0)
+    );
+}
+
+function totalBloxFormatter(data) {
+    return formatToken(8,
+        data.map(function (row) {
+            return row.blox;
         }).reduce(function (sum, i) {
             return sum + i
         }, 0)
@@ -137,16 +129,15 @@ String.prototype.format = function () {
     });
 };
 
-const fetchData = async(pool) => {
+const fetchData = async() => {
     var output = [];
     var start = 0;
     var end = 999;
     while (true) {
         const { data, error } = await client
-            .from("pool_data")
+            .from("hotspot_data")
             .select()
-            .eq("pool", pool)
-            .order("amount", { ascending: false })
+            .order("hotspot", { ascending: false })
             .range(start, end);
 
         if (error != undefined) {
@@ -167,30 +158,31 @@ const fetchData = async(pool) => {
 
 var $table = $("#table");
 var client;
+var last_updated;
+var total_dist = 0;
 var global_output = [];
 
-const run = async(pool) => {
+const run = async() => {
     $("#result").addClass("visually-hidden");
     $("#loading").removeClass("visually-hidden");
 
-    pool = POOLS.filter((i) => { return i.id == pool;})[0];
     try {
-        global_output = [];
-        global_output = await fetchData(pool.id);
+        global_output = await fetchData();
     } catch(err) {
         return;
     }
 
-    overall = 0;
-    for (let i of global_output) {
-        overall += i.amount;
+    overall_hotspot = 0;
+    for (var i of global_output) {
+        overall_hotspot += i.hotspot;
     }
-    for (let i of global_output) {
-        i.multiplier = i.amount / overall * pool.multiplier;
+    for (var i of global_output) {
+        i.blox = total_dist * i.hotspot / overall_hotspot;
     }
     $table.bootstrapTable("load", global_output);
 
-    $("#pool_lbl").text(pool.name);
+    $("#last_updated").text(last_updated);
+
     $("#result").removeClass("visually-hidden");
     $("#loading").addClass("visually-hidden");
 }
@@ -207,12 +199,9 @@ $(document).ready(async function() {
     if (error != undefined) {
         throw new Error(error.message);
     }
+    total_dist = parseInt(data.filter(x => x.key == "blox_daily_dist2")[0].value);
     last_updated = new Date(parseInt(data.filter(x => x.key == "blox_updated")[0].value));
-    $("#last_updated").text(last_updated);
-
-    for (let i of POOLS) {
-        $("#pools").append(`<li><a class="dropdown-item" href="javascript:void(0)" onclick="run('${i.id}')">${i.name}</a></li>`);
-    }
+    await run();
 });
 </script>
 </body>
